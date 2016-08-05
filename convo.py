@@ -67,8 +67,11 @@ class Conversation:
                 self.advance()
 
     def process_message(self, message):
-        print(repr(message))
-        self._values[self._step['key']] = message
+        processor = self._step.get('processor', None)
+        if processor is not None:
+            self._values[self._step['key']] = processor(self, message)
+        else:
+            self._values[self._step['key']] = message
         self.advance()
         self.continue_script()
 
@@ -158,5 +161,4 @@ class ConversationManager:
                                                 message, match.groups())
 
     def say(self, target, message):
-        print("YOIKS")
         self.conduit.send(target, message)

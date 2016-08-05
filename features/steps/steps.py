@@ -82,6 +82,22 @@ def step_impl(context):
     context.script.extend([ask(*q[:-1]) for q in context.questions])
 
 
+@given(u'the script has questions that process their answers')
+def step_impl(context):
+    def process(convo, message):
+        return message[0]
+
+    context.questions = [
+        ("What is your name?", "name", "Arthur, King of the Britons!", 'A'),
+        ("What is your quest?", "quest", "To find the Holy Grail!", 'T'),
+        ("What is the flight velocity of an unladen swallow?", "velocity",
+            ("African or European?"), 'A'),
+    ]
+
+    entries = [q[:-2] + (process,) for q in context.questions]
+    context.script.extend([ask(*e) for e in entries])
+
+
 @when(u'I trigger the script')
 @when(u'the trigger phrase is spoken')
 def step_impl(context):
@@ -102,7 +118,8 @@ def step_impl(context):
 
 @when(u'I answer the questions')
 def step_impl(context):
-    for question, _, answer in context.questions:
+    answers = [(q[0], q[2]) for q in context.questions]
+    for question, answer in answers:
         if context.conduit.last_message() == question:
             context.manager.process_message(context.target, context.identifier,
                                             answer)
@@ -155,6 +172,9 @@ def step_impl(context):
 @then(u'I can see the answers')
 def step_impl(context):
     values = context.conversation.get_values()
-    for _, key, answer in context.questions:
+    answers = [(q[1], q[-1]) for q in context.questions]
+    print(repr(answers))
+
+    for key, answer in answers:
         assert key in values
         assert values[key] == answer
