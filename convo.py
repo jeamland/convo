@@ -47,6 +47,44 @@ class Conversation:
         self.message = message
         self.context = context
 
+        self._step = None
+        self._script_iter = iter(script)
+        self._values = {}
+
+        self.advance()
+        self.continue_script()
+
+    def advance(self):
+        self._step = next(self._script_iter, None)
+
+    def continue_script(self):
+        while self._step is not None:
+            if isinstance(self._step, dict):
+                self.say(self._step['prompt'])
+                return
+            else:
+                self.say(self._step)
+                self.advance()
+
+    def process_message(self, message):
+        print(repr(message))
+        self._values[self._step['key']] = message
+        self.advance()
+        self.continue_script()
+
+    def say(self, message):
+        self.manager.say(self.target, message)
+
+    def get_values(self):
+        return self._values
+
+def ask(prompt, key, processor=None):
+    return {
+        'prompt': prompt,
+        'key': key,
+        'processor': processor,
+    }
+
 
 class ConversationManager:
     """
@@ -54,12 +92,13 @@ class ConversationManager:
     conversations.
     """
 
-    def __init__(self, scripts=None):
+    def __init__(self, conduit, scripts=None):
         """
         :param scripts: A mapping of trigger regexes or functions to
             :class:`Script <Script>`s.
         """
         self.conversations = {}
+        self.conduit = conduit
 
         if scripts is None:
             self.scripts = {}
@@ -107,8 +146,7 @@ class ConversationManager:
         :param message: The message to process.
         """
         if identifier in self.conversations:
-            self.conversations[identifier].process_message(target, identifier,
-                                                           message)
+            self.conversations[identifier].process_message(message)
         else:
             for pattern, script in self.scripts.items():
                 if callable(pattern):
@@ -118,3 +156,7 @@ class ConversationManager:
                     if match is not None:
                         self.start_conversation(script, target, identifier,
                                                 message, match.groups())
+
+    def say(self, target, message):
+        print("YOIKS")
+        self.conduit.send(target, message)
