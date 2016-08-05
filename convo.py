@@ -50,6 +50,7 @@ class Conversation:
         self._step = None
         self._script_iter = iter(script)
         self._values = {}
+        self._repeat = False
 
         self.advance()
         self.continue_script()
@@ -72,11 +73,19 @@ class Conversation:
             self._values[self._step['key']] = processor(self, message)
         else:
             self._values[self._step['key']] = message
-        self.advance()
+
+        if self._repeat:
+            self._repeat = False
+        else:
+            self.advance()
+
         self.continue_script()
 
     def say(self, message):
         self.manager.say(self.target, message)
+
+    def repeat(self):
+        self._repeat = True
 
     def get_values(self):
         return self._values

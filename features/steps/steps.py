@@ -98,6 +98,22 @@ def step_impl(context):
     context.script.extend([ask(*e) for e in entries])
 
 
+@given(u'the script has a question that asks for a repeat')
+def step_impl(context):
+    context.question = "What is your name?"
+    context.key = "name"
+    context.answers = ["Arthur, King of the Britons!", "Jeff"]
+    context.last_answer = context.answers[-1]
+    context.answer_count = len(context.answers)
+
+    def process(convo, message):
+        if message != context.last_answer:
+            convo.repeat()
+        return message
+
+    context.script.append(ask(context.question, context.key, process))
+
+
 @when(u'I trigger the script')
 @when(u'the trigger phrase is spoken')
 def step_impl(context):
@@ -123,6 +139,15 @@ def step_impl(context):
         if context.conduit.last_message() == question:
             context.manager.process_message(context.target, context.identifier,
                                             answer)
+
+
+
+@when(u'I answer the question')
+@when(u'I answer the question again')
+def step_impl(context):
+    assert context.conduit.last_message() == context.question
+    context.manager.process_message(context.target, context.identifier,
+                                    context.answers.pop(0))
 
 
 @then(u'a conversation starts using the script')
@@ -173,8 +198,21 @@ def step_impl(context):
 def step_impl(context):
     values = context.conversation.get_values()
     answers = [(q[1], q[-1]) for q in context.questions]
-    print(repr(answers))
 
     for key, answer in answers:
         assert key in values
         assert values[key] == answer
+
+
+@then(u'the question should be repeated')
+def step_impl(context):
+    prompts = [m[1] for m in context.conduit.messages]
+    assert len(prompts) == context.answer_count
+    assert prompts == [context.question] * context.answer_count
+
+
+@then(u'the last answer should be recorded')
+def step_impl(context):
+    answer = context.conversation.get_values()[context.key]
+    print(repr(answer), repr(context.last_answer))
+    assert answer == context.last_answer
