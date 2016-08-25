@@ -94,6 +94,19 @@ class Conversation:
         return self._values
 
 def ask(prompt, key, processor=None):
+    if isinstance(processor, list):
+        patterns = processor
+        def p(conv, message):
+            for pattern, func in patterns:
+                match = re.search(pattern, message, re.IGNORECASE)
+                print(repr(pattern), repr(match), repr(func(None, None, None)))
+                if match is not None:
+                    return func(conv, message, match.groups())
+            else:
+                conv.say("I can't respond to that, try again?")
+                conv.repeat()
+        processor = p
+
     return {
         'prompt': prompt,
         'key': key,

@@ -124,6 +124,24 @@ def step_impl(context):
     context.script.append(function)
 
 
+@given(u'the script has a question that selects processing based on regexes')
+def step_impl(context):
+    context.question = "Why is a duck?"
+    context.key = 'quack'
+    regexes = []
+
+    for row in context.table:
+        name, regex = row
+
+        def funcinator(n):
+            return lambda c, m, g: n
+
+        regexes.append((regex, funcinator(name)))
+
+    context.regexes = regexes
+    context.script.append(ask(context.question, context.key, regexes))
+
+
 @when(u'I trigger the script')
 @when(u'the trigger phrase is spoken')
 def step_impl(context):
@@ -158,6 +176,13 @@ def step_impl(context):
     assert context.conduit.last_message() == context.question
     context.manager.process_message(context.target, context.identifier,
                                     context.answers.pop(0))
+
+
+@when(u'I answer the question with {answer}')
+def step_impl(context, answer):
+    assert context.conduit.last_message() == context.question
+    context.manager.process_message(context.target, context.identifier,
+                                    answer)
 
 
 @then(u'a conversation starts using the script')
@@ -231,3 +256,10 @@ def step_impl(context):
 @then(u'the function is called')
 def step_impl(context):
     assert context.function_called
+
+
+@then(u'the answer should be processed by {processor}')
+def step_impl(context, processor):
+    answer_name = context.conversation.get_values()[context.key]
+    print(repr(context.regexes))
+    assert answer_name == processor, "%s != %s" % (answer_name, processor)
