@@ -6,7 +6,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='convo',
-      version='0.0.3',
+      version='0.0.4',
       description='Medium-agnostic conversation wrangler',
       long_description=open('README.rst').read(),
       author='Benno Rice',
