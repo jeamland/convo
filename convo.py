@@ -63,6 +63,9 @@ class Conversation:
             if isinstance(self._step, dict):
                 self.say(self._step['prompt'])
                 return
+            elif callable(self._step):
+                self._step(self)
+                self.advance()
             else:
                 self.say(self._step)
                 self.advance()

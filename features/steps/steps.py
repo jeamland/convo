@@ -114,6 +114,16 @@ def step_impl(context):
     context.script.append(ask(context.question, context.key, process))
 
 
+@given(u'the script has a function as part of its flow')
+def step_impl(context):
+    context.function_called = False
+
+    def function(convo):
+        context.function_called = True
+
+    context.script.append(function)
+
+
 @when(u'I trigger the script')
 @when(u'the trigger phrase is spoken')
 def step_impl(context):
@@ -216,3 +226,8 @@ def step_impl(context):
     answer = context.conversation.get_values()[context.key]
     print(repr(answer), repr(context.last_answer))
     assert answer == context.last_answer
+
+
+@then(u'the function is called')
+def step_impl(context):
+    assert context.function_called
