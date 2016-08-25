@@ -72,7 +72,11 @@ class Conversation:
 
     def process_message(self, message):
         processor = self._step.get('processor', None)
-        if processor is not None:
+
+        if self._step.get('_followup', False):
+            value = self._values[self._step['key']]
+            self._values[self._step['key']] = processor(self, message, value)
+        elif processor is not None:
             self._values[self._step['key']] = processor(self, message)
         else:
             self._values[self._step['key']] = message
@@ -88,6 +92,12 @@ class Conversation:
         self.manager.say(self.target, message)
 
     def repeat(self):
+        self._repeat = True
+
+    def followup(self, prompt, processor):
+        self._step['_followup'] = True
+        self._step['processor'] = processor
+        self._step['prompt'] = prompt
         self._repeat = True
 
     def get_values(self):

@@ -146,6 +146,24 @@ def step_impl(context):
     context.script.append(ask(context.question, context.key, regexes))
 
 
+@given(u'the script has a question that asks a follow-up question')
+def step_impl(context):
+    context.question = "Why is a duck?"
+    context.followup_question = "No really, why is a duck?"
+    context.answers = ["foo", "bar"]
+    context.key = "quack"
+
+    def followfunc(conv, message, state):
+        return ', '.join([state, message])
+
+    context.expected_answer = followfunc(None, *reversed(context.answers))
+
+    def func(conv, message):
+        conv.followup(context.followup_question, followfunc)
+        return message
+
+    context.script.append(ask(context.question, context.key, func))
+
 @when(u'I trigger the script')
 @when(u'the trigger phrase is spoken')
 def step_impl(context):
@@ -187,6 +205,14 @@ def step_impl(context, answer):
     assert context.conduit.last_message() == context.question
     context.manager.process_message(context.target, context.identifier,
                                     answer)
+
+
+@when(u'I answer the follow-up question')
+def step_impl(context):
+    print(repr(context.conduit.last_message()), repr(context.followup_question))
+    assert context.conduit.last_message() == context.followup_question
+    context.manager.process_message(context.target, context.identifier,
+                                    context.answers.pop(0))
 
 
 @then(u'a conversation starts using the script')
@@ -272,3 +298,15 @@ def step_impl(context, processor):
 @then(u'{string} should be in the regex groups')
 def step_impl(context, string):
     assert string in context.groups
+
+
+@then(u'the follow-up question is asked')
+def step_impl(context):
+    print(repr(context.conduit.last_message()), repr(context.followup_question))
+
+
+@then(u'the follow-up answer should be recorded')
+def step_impl(context):
+    answer = context.conversation.get_values()[context.key]
+    print(repr(answer), repr(context.expected_answer))
+    assert answer == context.expected_answer
