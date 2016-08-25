@@ -164,6 +164,14 @@ def step_impl(context):
 
     context.script.append(ask(context.question, context.key, func))
 
+
+@given(u'the script has a question')
+def step_impl(context):
+    context.question = "How even is a horse?"
+    context.key = "neigh"
+    context.script.append(ask(context.question, context.key))
+
+
 @when(u'I trigger the script')
 @when(u'the trigger phrase is spoken')
 def step_impl(context):
@@ -310,3 +318,14 @@ def step_impl(context):
     answer = context.conversation.get_values()[context.key]
     print(repr(answer), repr(context.expected_answer))
     assert answer == context.expected_answer
+
+
+@then(u'the answer should be considered {sense}')
+def step_impl(context, sense):
+    conv = context.manager.conversations[context.identifier]
+
+    if sense == 'positive':
+        assert conv.positive_response()
+    elif sense == 'negative':
+        assert conv.negative_response()
+

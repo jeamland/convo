@@ -26,6 +26,9 @@ import re
 class Conversation:
     """A currently active conversation."""
 
+    POSITIVE_RESPONSES = ['y', 'yes', 'yep', 'ok', 'aye', 'sounds good', 'yeah']
+    NEGATIVE_RESPONSES = ['n', 'no', 'nope', 'nah', 'nay']
+
     def __init__(self, manager, script, target, identifier, message, context):
         """
         :param manager: The :class:`ConversationManager <ConversationManager>`
@@ -71,6 +74,8 @@ class Conversation:
                 self.advance()
 
     def process_message(self, message):
+        self.message = message
+
         processor = self._step.get('processor', None)
 
         if self._step.get('_followup', False):
@@ -99,6 +104,18 @@ class Conversation:
         self._step['processor'] = processor
         self._step['prompt'] = prompt
         self._repeat = True
+
+    def response_sense(self, responses):
+        for response in responses:
+            if response in self.message.lower():
+                return True
+        return False
+
+    def positive_response(self):
+        return self.response_sense(self.POSITIVE_RESPONSES)
+
+    def negative_response(self):
+        return self.response_sense(self.NEGATIVE_RESPONSES)
 
     def get_values(self):
         return self._values
