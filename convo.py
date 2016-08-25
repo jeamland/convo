@@ -99,7 +99,6 @@ def ask(prompt, key, processor=None):
         def p(conv, message):
             for pattern, func in patterns:
                 match = re.search(pattern, message, re.IGNORECASE)
-                print(repr(pattern), repr(match), repr(func(None, None, None)))
                 if match is not None:
                     return func(conv, message, match.groups())
             else:

@@ -128,13 +128,17 @@ def step_impl(context):
 def step_impl(context):
     context.question = "Why is a duck?"
     context.key = 'quack'
+    context.groups = None
     regexes = []
 
     for row in context.table:
         name, regex = row
 
         def funcinator(n):
-            return lambda c, m, g: n
+            def func(conv, message, groups):
+                context.groups = groups
+                return n
+            return func
 
         regexes.append((regex, funcinator(name)))
 
@@ -263,3 +267,8 @@ def step_impl(context, processor):
     answer_name = context.conversation.get_values()[context.key]
     print(repr(context.regexes))
     assert answer_name == processor, "%s != %s" % (answer_name, processor)
+
+
+@then(u'{string} should be in the regex groups')
+def step_impl(context, string):
+    assert string in context.groups
