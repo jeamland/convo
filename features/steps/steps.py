@@ -211,6 +211,7 @@ def step_impl(context):
 @when(u'I answer the question with {answer}')
 def step_impl(context, answer):
     assert context.conduit.last_message() == context.question
+    context.answer = answer
     context.manager.process_message(context.target, context.identifier,
                                     answer)
 
@@ -325,7 +326,7 @@ def step_impl(context, sense):
     conv = context.manager.conversations[context.identifier]
 
     if sense == 'positive':
-        assert conv.positive_response()
+        assert conv.positive_response(context.answer)
     elif sense == 'negative':
-        assert conv.negative_response()
+        assert conv.negative_response(context.answer)
 

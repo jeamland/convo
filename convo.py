@@ -23,11 +23,37 @@ __copyright__ = 'Copyright 2016 Benno Rice'
 import re
 
 
-class Conversation:
-    """A currently active conversation."""
-
+class ConversationalSupportMixin:
     POSITIVE_RESPONSES = ['y', 'yes', 'yep', 'ok', 'aye', 'sounds good', 'yeah']
     NEGATIVE_RESPONSES = ['n', 'no', 'nope', 'nah', 'nay']
+
+    @staticmethod
+    def join_comma_and(items):
+        items = [str(i) for i in items]
+        if len(items) > 1:
+            result = ', '.join(items[:-1])
+            return '%s and %s' % (result, items[-1])
+        else:
+            return items[0]
+
+    @staticmethod
+    def response_sense(message, responses):
+        for response in responses:
+            if response in message.lower():
+                return True
+        return False
+
+    @classmethod
+    def positive_response(cls, message):
+        return cls.response_sense(message, cls.POSITIVE_RESPONSES)
+
+    @classmethod
+    def negative_response(cls, message):
+        return cls.response_sense(message, cls.NEGATIVE_RESPONSES)
+
+class Conversation(ConversationalSupportMixin):
+    """A currently active conversation."""
+
 
     def __init__(self, manager, script, target, identifier, message, context):
         """
@@ -104,18 +130,6 @@ class Conversation:
         self._step['processor'] = processor
         self._step['prompt'] = prompt
         self._repeat = True
-
-    def response_sense(self, responses):
-        for response in responses:
-            if response in self.message.lower():
-                return True
-        return False
-
-    def positive_response(self):
-        return self.response_sense(self.POSITIVE_RESPONSES)
-
-    def negative_response(self):
-        return self.response_sense(self.NEGATIVE_RESPONSES)
 
     def get_values(self):
         return self._values
